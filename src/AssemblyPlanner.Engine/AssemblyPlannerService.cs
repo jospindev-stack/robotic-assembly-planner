@@ -25,7 +25,7 @@ public sealed class AssemblyPlannerService
         if (handlingTimeSeconds < 0)
             throw new ArgumentOutOfRangeException(nameof(handlingTimeSeconds));
 
-        var orderedParts = _sequenceOptimizer.OptimizeNearestNeighbor(start, parts);
+        var orderedParts = _sequenceOptimizer.Optimize(start, parts);
         var segments = new List<PathSegment>();
         var sequence = new List<string>();
         var current = start;
