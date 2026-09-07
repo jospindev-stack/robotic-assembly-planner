@@ -10,7 +10,13 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
         policy
-            .WithOrigins("http://localhost:5173")
+            .SetIsOriginAllowed(origin =>
+            {
+                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                    return false;
+
+                return uri.IsLoopback;
+            })
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
