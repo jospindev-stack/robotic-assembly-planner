@@ -4,6 +4,7 @@ using AssemblyPlanner.Engine;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<SequenceOptimizer>();
 builder.Services.AddSingleton<CollisionDetector>();
+builder.Services.AddSingleton<ObstacleRouter>();
 builder.Services.AddSingleton<AssemblyPlannerService>();
 
 var app = builder.Build();
