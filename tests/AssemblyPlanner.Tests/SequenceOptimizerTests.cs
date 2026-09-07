@@ -19,4 +19,49 @@ public sealed class SequenceOptimizerTests
 
         Assert.Equal(new[] { "Near", "Middle", "Far" }, result.Select(x => x.Id));
     }
+
+    [Fact]
+    public void ImproveTwoOpt_ReducesRouteDistanceWhenBetterOrderExists()
+    {
+        var optimizer = new SequenceOptimizer();
+        var start = new Point2D(0, 0);
+        var route = new[]
+        {
+            new Part("A", new Point2D(10, 0)),
+            new Part("B", new Point2D(10, 10)),
+            new Part("C", new Point2D(20, 0)),
+            new Part("D", new Point2D(20, 10))
+        };
+
+        var before = optimizer.CalculateDistance(start, route);
+        var improved = optimizer.ImproveTwoOpt(start, route);
+        var after = optimizer.CalculateDistance(start, improved);
+
+        Assert.True(after < before);
+        Assert.Equal(route.Select(x => x.Id).OrderBy(x => x), improved.Select(x => x.Id).OrderBy(x => x));
+    }
+
+    [Fact]
+    public void OptimizeNearestNeighbor_UsesProvidedTravelCost()
+    {
+        var optimizer = new SequenceOptimizer();
+        var start = new Point2D(0, 0);
+        var parts = new[]
+        {
+            new Part("GeometricallyNear", new Point2D(10, 0)),
+            new Part("ActuallyCheaper", new Point2D(30, 0))
+        };
+
+        double TravelCost(Point2D from, Point2D to)
+        {
+            if (from == start && to == parts[0].Position)
+                return 100;
+
+            return Geometry.Distance(from, to);
+        }
+
+        var result = optimizer.OptimizeNearestNeighbor(start, parts, TravelCost);
+
+        Assert.Equal("ActuallyCheaper", result[0].Id);
+    }
 }
