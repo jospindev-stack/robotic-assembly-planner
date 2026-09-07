@@ -25,7 +25,18 @@ public sealed class AssemblyPlannerService
         if (handlingTimeSeconds < 0)
             throw new ArgumentOutOfRangeException(nameof(handlingTimeSeconds));
 
-        var orderedParts = _sequenceOptimizer.Optimize(start, parts);
+        double RoutedCost(Point2D from, Point2D to)
+        {
+            var route = _obstacleRouter.FindShortestPath(from, to, obstacles);
+            var distance = 0d;
+
+            for (var i = 0; i < route.Count - 1; i++)
+                distance += Geometry.Distance(route[i], route[i + 1]);
+
+            return distance;
+        }
+
+        var orderedParts = _sequenceOptimizer.Optimize(start, parts, RoutedCost);
         var segments = new List<PathSegment>();
         var sequence = new List<string>();
         var current = start;
