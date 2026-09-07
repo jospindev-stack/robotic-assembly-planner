@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const initialRequest = {
   start: { x: 40, y: 40 },
@@ -19,8 +19,58 @@ function App() {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [progress, setProgress] = useState(0);
 
   const bounds = useMemo(() => ({ width: 700, height: 400 }), []);
+
+  useEffect(() => {
+    if (!plan?.segments?.length) {
+      setProgress(0);
+      return;
+    }
+
+    setProgress(0);
+    const durationMs = 5000;
+    const startedAt = performance.now();
+    let frameId;
+
+    const tick = (now) => {
+      const next = Math.min(1, (now - startedAt) / durationMs);
+      setProgress(next);
+      if (next < 1) frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [plan]);
+
+  const robotPosition = useMemo(() => {
+    if (!plan?.segments?.length) return initialRequest.start;
+
+    const lengths = plan.segments.map((segment) => Math.hypot(
+      segment.to.x - segment.from.x,
+      segment.to.y - segment.from.y
+    ));
+    const total = lengths.reduce((sum, value) => sum + value, 0);
+    if (total <= 0) return plan.segments.at(-1).to;
+
+    let remaining = total * progress;
+
+    for (let i = 0; i < plan.segments.length; i += 1) {
+      const segment = plan.segments[i];
+      const length = lengths[i];
+      if (remaining <= length) {
+        const ratio = length === 0 ? 1 : remaining / length;
+        return {
+          x: segment.from.x + (segment.to.x - segment.from.x) * ratio,
+          y: segment.from.y + (segment.to.y - segment.from.y) * ratio
+        };
+      }
+      remaining -= length;
+    }
+
+    return plan.segments.at(-1).to;
+  }, [plan, progress]);
 
   async function generatePlan() {
     setLoading(true);
@@ -93,8 +143,16 @@ function App() {
               <text x={part.position.x + 13} y={part.position.y - 10} className="point-label">{part.id}</text>
             </g>
           ))}
+
+          {plan && (
+            <g className="robot-marker">
+              <circle cx={robotPosition.x} cy={robotPosition.y} r="11" />
+              <circle cx={robotPosition.x} cy={robotPosition.y} r="4" className="robot-core" />
+            </g>
+          )}
         </svg>
 
+        {plan && <div className="animation-status">Simulation progress: {(progress * 100).toFixed(0)}%</div>}
         {error && <p className="error">{error}. Make sure the ASP.NET Core API is running.</p>}
       </section>
     </main>
