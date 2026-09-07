@@ -5,12 +5,12 @@ namespace AssemblyPlanner.Engine;
 public sealed class AssemblyPlannerService
 {
     private readonly SequenceOptimizer _sequenceOptimizer;
-    private readonly CollisionDetector _collisionDetector;
+    private readonly ObstacleRouter _obstacleRouter;
 
-    public AssemblyPlannerService(SequenceOptimizer sequenceOptimizer, CollisionDetector collisionDetector)
+    public AssemblyPlannerService(SequenceOptimizer sequenceOptimizer, ObstacleRouter obstacleRouter)
     {
         _sequenceOptimizer = sequenceOptimizer;
-        _collisionDetector = collisionDetector;
+        _obstacleRouter = obstacleRouter;
     }
 
     public PlanResult Plan(
@@ -30,26 +30,32 @@ public sealed class AssemblyPlannerService
         var sequence = new List<string>();
         var current = start;
         var totalDistance = 0d;
-        var collisions = 0;
 
         foreach (var part in orderedParts)
         {
-            var collisionIds = obstacles
-                .Where(obstacle => _collisionDetector.Intersects(current, part.Position, obstacle))
-                .Select(obstacle => obstacle.Id)
-                .OrderBy(id => id, StringComparer.Ordinal)
-                .ToArray();
+            var route = _obstacleRouter.FindShortestPath(current, part.Position, obstacles);
 
-            var segment = new PathSegment(current, part.Position, part.Id, collisionIds);
-            segments.Add(segment);
+            for (var i = 0; i < route.Count - 1; i++)
+            {
+                var isFinalLeg = i == route.Count - 2;
+                var from = route[i];
+                var to = route[i + 1];
+
+                segments.Add(new PathSegment(
+                    from,
+                    to,
+                    isFinalLeg ? part.Id : null,
+                    Array.Empty<string>()));
+
+                totalDistance += Geometry.Distance(from, to);
+            }
+
             sequence.Add(part.Id);
-            totalDistance += Geometry.Distance(current, part.Position);
-            collisions += collisionIds.Length;
             current = part.Position;
         }
 
         var estimatedCycleTime = totalDistance / robotSpeedMmPerSecond + orderedParts.Count * handlingTimeSeconds;
 
-        return new PlanResult(sequence, segments, totalDistance, estimatedCycleTime, collisions);
+        return new PlanResult(sequence, segments, totalDistance, estimatedCycleTime, 0);
     }
 }
