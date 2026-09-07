@@ -4,6 +4,21 @@ A C#/.NET 8 simulation project for industrial robotic assembly planning.
 
 The application models assembly parts and restricted zones, proposes an optimized assembly sequence, computes collision-free robot travel paths, visualizes the work cell in 2D, and estimates total travel distance and cycle time. The project focuses on software engineering, computational geometry, optimization, automated testing, and industrial problem solving.
 
+## Demo
+
+![Robotic Assembly Planner demo](docs/images/robotic-assembly-planner-demo.png)
+
+The demo shows a generated plan for a simplified robotic work cell. The planner selects the assembly sequence `A → C → B → D`, routes the robot around the restricted zone, and produces a collision-free trajectory.
+
+For this scenario:
+
+- Optimized sequence: `A → C → B → D`
+- Total routed distance: `834.3 mm`
+- Estimated cycle time: `12.95 s`
+- Detected collisions: `0`
+
+The 2D interface visualizes the assembly points, restricted area, calculated path, and animated robot position while the KPI cards summarize the planning result.
+
 ## Why this project
 
 Manufacturing software often has to transform physical constraints into reliable software decisions. This project explores that problem through a simplified robotic work-cell planner.
