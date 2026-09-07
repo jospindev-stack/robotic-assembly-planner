@@ -2,7 +2,7 @@
 
 A C#/.NET 8 simulation project for industrial robotic assembly planning.
 
-The application models assembly parts and restricted zones, proposes an optimized assembly sequence, computes collision-free robot travel paths, and estimates total travel distance and cycle time. The project focuses on software engineering, computational geometry, optimization, automated testing, and industrial problem solving.
+The application models assembly parts and restricted zones, proposes an optimized assembly sequence, computes collision-free robot travel paths, visualizes the work cell in 2D, and estimates total travel distance and cycle time. The project focuses on software engineering, computational geometry, optimization, automated testing, and industrial problem solving.
 
 ## Why this project
 
@@ -11,7 +11,7 @@ Manufacturing software often has to transform physical constraints into reliable
 The current version demonstrates:
 
 - C# and .NET 8
-- domain separation between models, planning engine, API, and tests
+- domain separation between models, planning engine, API, frontend, and tests
 - 2D geometry
 - nearest-neighbor sequence planning
 - 2-opt sequence improvement
@@ -23,8 +23,11 @@ The current version demonstrates:
 - total routed distance calculation
 - cycle-time estimation
 - ASP.NET Core REST API
+- React/Vite 2D visualization
+- animated robot movement along the calculated route
 - xUnit automated tests
-- GitHub Actions CI configuration
+- GitHub Actions CI for backend, frontend, and Docker builds
+- Docker and Docker Compose support
 
 ## Architecture
 
@@ -33,6 +36,8 @@ src/
 ├── AssemblyPlanner.Domain/    # Parts, points, obstacles, path/result models
 ├── AssemblyPlanner.Engine/    # Geometry, routing, optimization and planning logic
 └── AssemblyPlanner.Api/       # ASP.NET Core API
+
+frontend/                      # React/Vite 2D work-cell visualization
 
 tests/
 └── AssemblyPlanner.Tests/     # Unit tests
@@ -53,7 +58,7 @@ Visibility graph + Dijkstra routing
       ↓
 Distance + cycle-time estimation
       ↓
-Plan result
+2D animated plan visualization
 ```
 
 A part that appears geometrically close can be deprioritized when restricted zones make the actual robot route significantly longer.
@@ -82,7 +87,22 @@ Example request:
 
 The response includes the selected assembly sequence, collision-free path segments, total routed distance, estimated cycle time, and collision count.
 
-## Run locally
+## Run with Docker
+
+The complete stack can be started with one command:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- Frontend: `http://localhost:5173`
+- API health endpoint: `http://localhost:5000/health`
+
+## Run locally without Docker
+
+Backend:
 
 ```bash
 dotnet restore
@@ -91,14 +111,32 @@ dotnet test
 dotnet run --project src/AssemblyPlanner.Api
 ```
 
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## CI
+
+GitHub Actions validates:
+
+1. .NET restore
+2. .NET release build
+3. xUnit tests with code coverage collection
+4. frontend dependency installation
+5. React production build
+6. Docker Compose image build
+
 ## Roadmap
 
-- animated 2D work-cell visualization
 - configurable robot acceleration/deceleration constraints
 - turn penalties and operation-time constraints
-- Docker support
 - benchmark different sequence and routing strategies
 - optional A* grid planner for comparison with visibility-graph routing
+- editable work-cell inputs from the frontend
 
 ## Disclaimer
 
